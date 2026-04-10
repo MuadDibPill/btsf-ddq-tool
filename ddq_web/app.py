@@ -1,20 +1,18 @@
 """
 BTSF DDQ Automation — Flask Web Interface
-Lance avec : python app.py
-Accès : http://localhost:5000
+Run with : python app.py
+Access   : http://localhost:5000
 """
 
 import os
 import sys
-import json
 import uuid
 import threading
 import shutil
 from pathlib import Path
-from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file, abort
 
-# ── Chemins ───────────────────────────────────────────────────────────────────
+# ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR    = Path(__file__).parent
 DDQ_APP_DIR = BASE_DIR.parent / "ddq_app"
 UPLOAD_DIR  = BASE_DIR / "uploads"
@@ -23,37 +21,37 @@ OUTPUT_DIR  = BASE_DIR / "output"
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Ajouter ddq_app au path Python
+# Add ddq_app to the Python path
 sys.path.insert(0, str(DDQ_APP_DIR))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB max upload
 
-# ── Stockage des jobs en mémoire ──────────────────────────────────────────────
+# ── In-memory job store ───────────────────────────────────────────────────────
 jobs = {}   # job_id -> { status, progress, message, output_path, error }
 
 
-# ── Extensions acceptées ──────────────────────────────────────────────────────
+# ── Accepted file extensions ──────────────────────────────────────────────────
 ALLOWED = {".pdf", ".docx", ".doc", ".xlsx", ".xls", ".txt", ".csv", ".md"}
 
 def allowed_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ALLOWED
 
 
-# ── Worker (tourne dans un thread séparé) ─────────────────────────────────────
+# ── Worker (runs in a separate thread) ────────────────────────────────────────
 
 def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
-                site: str, mw: str, signals_override: str):
-    """Exécute le pipeline DDQ dans un thread séparé."""
+                location: str, signals_override: str):
+    """Run the DDQ pipeline in a background thread."""
     try:
-        jobs[job_id]["status"]  = "running"
-        jobs[job_id]["message"] = "Extraction des documents..."
+        jobs[job_id]["status"]   = "running"
+        jobs[job_id]["message"]  = "Extracting documents..."
         jobs[job_id]["progress"] = 10
 
-        # Clé depuis Render (variable env) ou saisie dans le formulaire (fallback)
+        # Key from Render env var (fallback to form input if provided)
         api_key = os.getenv("ANTHROPIC_API_KEY") or jobs[job_id].get("api_key", "")
         if not api_key:
-            raise ValueError("Clé API Anthropic non configurée. Ajouter ANTHROPIC_API_KEY dans les variables d'environnement Render.")
+            raise ValueError("Anthropic API key not configured. Set ANTHROPIC_API_KEY in the Render environment variables.")
         os.environ["ANTHROPIC_API_KEY"] = api_key
 
         from core.ingestion import ingest_folder
@@ -65,7 +63,7 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
 
         # Step 1
         chunks = ingest_folder(folder_path)
-        jobs[job_id]["message"]  = f"{len(chunks)} chunks extraits — détection des signaux..."
+        jobs[job_id]["message"]  = f"{len(chunks)} chunks extracted — detecting signals..."
         jobs[job_id]["progress"] = 25
 
         # Step 2
@@ -75,22 +73,19 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
             signals.update(overrides)
 
         active = [k for k, v in signals.items() if v]
-        jobs[job_id]["message"]  = f"Signaux: {', '.join(active) or 'aucun'} — assemblage des questions..."
+        jobs[job_id]["message"]  = f"Signals: {', '.join(active) or 'none'} — assembling questions..."
         jobs[job_id]["progress"] = 40
         jobs[job_id]["signals"]  = signals
 
         # Step 3
         questions = assemble_questions(signals)
-        jobs[job_id]["message"]  = f"{len(questions)} questions — génération des réponses..."
+        jobs[job_id]["message"]  = f"{len(questions)} questions — generating answers..."
         jobs[job_id]["progress"] = 50
 
-        # Step 4 — avec callback de progression
+        # Step 4 — per-question progress callback
         answers = []
         total   = len(questions)
         for i, q in enumerate(questions, 1):
-            from core.ingestion import search_chunks, chunks_to_context
-            from core.generator import generate_answers
-            # Génère réponse par réponse pour mettre à jour la progression
             ans_list = generate_answers([q], chunks, verbose=False)
             answers.extend(ans_list)
             pct = 50 + int((i / total) * 40)
@@ -98,14 +93,14 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
             jobs[job_id]["message"]  = f"Question {i}/{total} — {q.qid}..."
 
         # Step 5
-        jobs[job_id]["message"]  = "Génération du document Word..."
+        jobs[job_id]["message"]  = "Generating Word document..."
         jobs[job_id]["progress"] = 92
 
         site_info = {}
-        if site: site_info["Site address"]  = site
-        if mw:   site_info["Grid capacity"] = mw
+        if location:
+            site_info["Location"] = location
 
-        # Forcer l'output dans notre dossier
+        # Force output into our folder
         import config as cfg
         cfg.OUTPUT_DIR = str(OUTPUT_DIR)
 
@@ -113,11 +108,11 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
 
         jobs[job_id]["status"]      = "done"
         jobs[job_id]["progress"]    = 100
-        jobs[job_id]["message"]     = "DDQ générée avec succès."
+        jobs[job_id]["message"]     = "DDQ generated successfully."
         jobs[job_id]["output_path"] = output_path
         jobs[job_id]["output_name"] = Path(output_path).name
 
-        # Statistiques
+        # Statistics
         from collections import Counter
         counts = Counter(a.confidence for a in answers)
         jobs[job_id]["stats"] = {
@@ -132,7 +127,7 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
         jobs[job_id]["message"] = str(e)
         jobs[job_id]["error"]   = str(e)
     finally:
-        # Nettoyage du dossier d'upload temporaire
+        # Clean up the temporary upload folder
         shutil.rmtree(folder_path, ignore_errors=True)
 
 
@@ -145,19 +140,16 @@ def index():
 
 @app.route("/submit", methods=["POST"])
 def submit():
-    """Reçoit le formulaire, sauvegarde les fichiers, lance le job."""
+    """Receive the form, save files, start the job."""
     deal_name        = request.form.get("deal_name", "Project XXX").strip()
-    site             = request.form.get("site", "").strip()
-    mw               = request.form.get("mw", "").strip()
-    # Clé lue depuis l'environnement — pas besoin du formulaire
+    location         = request.form.get("site", "").strip()
     signals_override = request.form.get("signals_override", "").strip()
     files            = request.files.getlist("documents")
 
-    # Validation clé : elle est lue côté serveur
     if not files or all(f.filename == "" for f in files):
-        return jsonify({"error": "Aucun document uploadé."}), 400
+        return jsonify({"error": "No documents uploaded."}), 400
 
-    # Sauvegarder les fichiers dans un dossier temporaire
+    # Save files into a temporary folder
     job_id     = str(uuid.uuid4())[:8]
     job_folder = UPLOAD_DIR / job_id
     job_folder.mkdir()
@@ -171,19 +163,19 @@ def submit():
 
     if saved == 0:
         shutil.rmtree(str(job_folder), ignore_errors=True)
-        return jsonify({"error": "Aucun fichier valide (PDF, DOCX, XLSX acceptés)."}), 400
+        return jsonify({"error": "No valid files (PDF, DOCX, XLSX accepted)."}), 400
 
-    # Initialiser le job
+    # Initialise job
     jobs[job_id] = {
         "status":   "queued",
         "progress": 0,
-        "message":  f"{saved} fichier(s) reçu(s) — démarrage...",
+        "message":  f"{saved} file(s) received — starting...",
     }
 
-    # Lancer dans un thread séparé
+    # Launch in a separate thread
     t = threading.Thread(
         target=run_ddq_job,
-        args=(job_id, str(job_folder), deal_name, site, mw, signals_override),
+        args=(job_id, str(job_folder), deal_name, location, signals_override),
         daemon=True
     )
     t.start()
@@ -193,10 +185,10 @@ def submit():
 
 @app.route("/status/<job_id>")
 def status(job_id):
-    """Retourne le statut du job (polling)."""
+    """Return the job status (polling endpoint)."""
     job = jobs.get(job_id)
     if not job:
-        return jsonify({"error": "Job introuvable."}), 404
+        return jsonify({"error": "Job not found."}), 404
     return jsonify({
         "status":      job.get("status"),
         "progress":    job.get("progress", 0),
@@ -210,7 +202,7 @@ def status(job_id):
 
 @app.route("/download/<job_id>")
 def download(job_id):
-    """Télécharge le Word généré."""
+    """Download the generated Word file."""
     job = jobs.get(job_id)
     if not job or job.get("status") != "done":
         abort(404)
@@ -221,11 +213,11 @@ def download(job_id):
                      download_name=job.get("output_name"))
 
 
-# ── Lancement ─────────────────────────────────────────────────────────────────
+# ── Entrypoint ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     print("\n" + "="*55)
-    print("  BTSF DDQ Automation — Interface Web (Flask)")
-    print("  Ouvre ton navigateur sur : http://localhost:5000")
+    print("  BTSF DDQ Automation — Web Interface (Flask)")
+    print("  Open your browser at: http://localhost:5000")
     print("="*55 + "\n")
     app.run(debug=False, host="0.0.0.0", port=5000)
