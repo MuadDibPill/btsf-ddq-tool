@@ -1,0 +1,47 @@
+# render.yaml — Configuration de déploiement Render
+# Déploie deux services : l'interface Flask ET l'interface Streamlit
+#
+# SETUP :
+# 1. Pusher ce repo sur GitHub
+# 2. Aller sur render.com → New → Blueprint
+# 3. Connecter le repo GitHub
+# 4. Render lit ce fichier et crée les deux services automatiquement
+# 5. Ajouter la variable ANTHROPIC_API_KEY dans le dashboard Render
+
+services:
+
+  # ── Service 1 : Interface Flask ──────────────────────────────────────────
+  - type: web
+    name: btsf-ddq-flask
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 600
+    rootDir: .
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # A saisir manuellement dans le dashboard Render
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DDQ_APP_PATH
+        value: "/opt/render/project/src/ddq_app"
+    healthCheckPath: /
+    autoDeploy: true
+    plan: starter            # ~7 USD/mois — passer à "standard" pour plus de RAM
+
+  # ── Service 2 : Interface Streamlit ──────────────────────────────────────
+  - type: web
+    name: btsf-ddq-streamlit
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    rootDir: .
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DDQ_APP_PATH
+        value: "/opt/render/project/src/ddq_app"
+    healthCheckPath: /
+    autoDeploy: true
+    plan: starter
