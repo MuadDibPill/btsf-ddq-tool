@@ -1,421 +1,919 @@
-<!DOCTYPE html>
-<html lang="fr">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTSF DDQ Automation</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTSF — DDQ Automation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      /* BTSF brand palette */
+      --navy:          #0D1F3C;
+      --navy-hi:       #1A3566;
+      --navy-soft:     rgba(13, 31, 60, 0.04);
+      --navy-line:     rgba(13, 31, 60, 0.10);
+      --gold:          #B8942A;
+      --gold-hi:       #D4AE3F;
+      --gold-soft:     rgba(184, 148, 42, 0.08);
+      --gold-line:     rgba(184, 148, 42, 0.35);
+
+      /* Neutrals */
+      --bg:            #FAFAF7;
+      --surface:       #FFFFFF;
+      --text:          #0D1F3C;
+      --text-dim:      #5A6472;
+      --text-mute:     #8B94A3;
+      --border:        #E8E6DF;
+      --border-hi:     #D0CDC3;
+
+      /* Semantic */
+      --success:       #1D6A3A;
+      --warning:       #B7770D;
+      --danger:        #C0392B;
+
+      --radius:        3px;
+      --radius-lg:     6px;
+      --font:          'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --mono:          'JetBrains Mono', ui-monospace, monospace;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif; font-size: 14px;
-      background: #F0F2F5; color: #1A1A1A; min-height: 100vh;
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-weight: 400;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Header */
-    .header {
-      background: #0D1F3C; color: white; padding: 18px 32px;
-      display: flex; align-items: center; gap: 16px;
-    }
-    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
-    .header span { font-size: 12px; color: #9DB4CC; margin-left: auto; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea { font-family: inherit; }
 
-    /* Layout */
-    .container { max-width: 780px; margin: 36px auto; padding: 0 16px; }
-
-    /* Card */
-    .card {
-      background: white; border-radius: 10px; padding: 28px 32px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 20px;
-    }
-    .card-title {
-      font-size: 13px; font-weight: 700; color: #0D1F3C;
-      text-transform: uppercase; letter-spacing: 0.8px;
-      border-bottom: 2px solid #B8942A; padding-bottom: 8px; margin-bottom: 20px;
+    /* ─────────── Layout ─────────── */
+    .shell {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 32px 96px;
     }
 
-    /* Form */
-    .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
-    .form-group { flex: 1; }
-    .form-group label {
-      display: block; font-size: 12px; font-weight: 700;
-      color: #2E5FA3; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+    /* ─────────── Header ─────────── */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
     }
-    .form-group input[type="text"] {
-      width: 100%; padding: 9px 12px; border: 1px solid #D0D4DB;
-      border-radius: 6px; font-size: 13px; color: #1A1A1A;
-      transition: border-color 0.2s;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--navy);
     }
-    .form-group input:focus {
-      outline: none; border-color: #2E5FA3;
-      box-shadow: 0 0 0 3px rgba(46,95,163,0.1);
+    .brand-mark {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--navy);
+      color: var(--bg);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0;
     }
-    .form-group small { display: block; margin-top: 4px; color: #5A6472; font-size: 11px; }
+    .nav-meta {
+      color: var(--text-mute);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
 
-    /* Drop zone */
-    .dropzone {
-      border: 2px dashed #D0D4DB; border-radius: 8px;
-      padding: 32px; text-align: center; cursor: pointer;
-      transition: all 0.2s; background: #FAFBFC;
+    /* ─────────── Hero ─────────── */
+    .hero {
+      padding: 64px 0 56px;
+      border-bottom: 1px solid var(--border);
     }
-    .dropzone.dragover { border-color: #2E5FA3; background: #EFF7FF; }
-    .dropzone .icon { font-size: 32px; margin-bottom: 10px; }
-    .dropzone p { color: #5A6472; font-size: 13px; }
-    .dropzone strong { color: #0D1F3C; }
-    .file-list { margin-top: 14px; text-align: left; }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 28px;
+      height: 1px;
+      background: var(--gold);
+    }
+    .hero h1 {
+      font-size: 40px;
+      line-height: 1.1;
+      font-weight: 600;
+      letter-spacing: -0.022em;
+      margin-bottom: 18px;
+      color: var(--navy);
+    }
+    .hero p {
+      color: var(--text-dim);
+      font-size: 16px;
+      max-width: 560px;
+      line-height: 1.6;
+    }
+
+    /* ─────────── Section ─────────── */
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+    .section-hint {
+      font-size: 12px;
+      color: var(--text-mute);
+    }
+
+    /* ─────────── Form ─────────── */
+    .form {
+      padding-top: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+    .field input[type="text"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 15px;
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    .field input[type="text"]:hover { border-color: var(--border-hi); }
+    .field input[type="text"]:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+    .field .hint {
+      font-size: 12px;
+      color: var(--text-mute);
+      font-style: italic;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ─────────── Upload ─────────── */
+    .drop {
+      position: relative;
+      border: 1px dashed var(--border-hi);
+      border-radius: var(--radius-lg);
+      padding: 44px 32px;
+      text-align: center;
+      background: var(--surface);
+      transition: border-color .15s, background .15s;
+      cursor: pointer;
+    }
+    .drop:hover,
+    .drop.is-drag {
+      border-color: var(--gold);
+      background: var(--gold-soft);
+    }
+    .drop-icon {
+      width: 28px; height: 28px;
+      margin: 0 auto 16px;
+      color: var(--text-dim);
+      stroke-width: 1.25;
+    }
+    .drop-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .drop-sub {
+      font-size: 12px;
+      color: var(--text-mute);
+    }
+    .drop-sub code {
+      font-family: var(--mono);
+      font-size: 10px;
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 2px;
+      color: var(--text-dim);
+      margin: 0 1px;
+    }
+    .file-list {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
     .file-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 10px; background: #F4F5F7; border-radius: 5px;
-      margin-bottom: 5px; font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
     }
-    .file-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D6A3A; flex-shrink: 0; }
+    .file-item .name {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 0; flex: 1;
+    }
+    .file-item .name svg {
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .file-item .name span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--navy);
+    }
+    .file-item .size {
+      color: var(--text-mute);
+      font-family: var(--mono);
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+    .file-item .remove {
+      background: none;
+      border: none;
+      color: var(--text-mute);
+      font-size: 18px;
+      padding: 0 4px;
+      margin-left: 8px;
+      line-height: 1;
+      transition: color .15s;
+    }
+    .file-item .remove:hover { color: var(--danger); }
 
-    /* Signals */
+    /* ─────────── Signals (chip UI preserved) ─────────── */
     .signals-grid {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .signal-chip {
-      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-      cursor: pointer; border: 1.5px solid #D0D4DB; background: white; color: #5A6472;
-      transition: all 0.15s; user-select: none;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-hi);
+      background: var(--surface);
+      color: var(--text-dim);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+      font-family: var(--mono);
+      letter-spacing: -0.01em;
     }
-    .signal-chip.on  { background: #0D1F3C; color: white; border-color: #0D1F3C; }
-    .signal-chip.off { background: #F4F5F7; color: #5A6472; border-color: #D0D4DB; }
-    .signal-chip.forced-on  { background: #1D6A3A; color: white; border-color: #1D6A3A; }
-    .signal-chip.forced-off { background: #C0392B; color: white; border-color: #C0392B; }
-    .signals-note { font-size: 11px; color: #5A6472; margin-top: 6px; font-style: italic; }
+    .signal-chip:hover { border-color: var(--navy); color: var(--navy); }
+    .signal-chip.forced-on {
+      background: var(--navy);
+      color: var(--bg);
+      border-color: var(--navy);
+    }
+    .signal-chip.forced-off {
+      background: var(--surface);
+      color: var(--danger);
+      border-color: var(--danger);
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+    .signals-legend {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-mute);
+      font-style: italic;
+    }
+    .signals-legend b { font-weight: 600; font-style: normal; }
 
-    /* Button */
+    /* ─────────── Submit ─────────── */
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
     .btn {
-      width: 100%; padding: 13px; background: #0D1F3C; color: white;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
-      cursor: pointer; letter-spacing: 0.5px; transition: background 0.2s;
-      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      background: var(--navy);
+      color: var(--bg);
+      border: 1px solid var(--navy);
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background .15s, border-color .15s, transform .1s;
     }
-    .btn:hover:not(:disabled) { background: #1A4A8A; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover:not(:disabled) {
+      background: var(--navy-hi);
+      border-color: var(--navy-hi);
+    }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--navy);
+      border-color: var(--border-hi);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--navy-soft);
+      border-color: var(--navy);
+    }
+    .btn-gold {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--navy);
+    }
+    .btn-gold:hover:not(:disabled) {
+      background: var(--gold-hi);
+      border-color: var(--gold-hi);
+    }
 
-    /* Progress */
-    #progress-card { display: none; }
-    .progress-bar-wrap {
-      background: #F4F5F7; border-radius: 8px; height: 12px;
-      overflow: hidden; margin: 12px 0;
+    /* ─────────── Status panel ─────────── */
+    .panel {
+      margin-top: 56px;
+      padding: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: none;
     }
-    .progress-bar {
-      height: 100%; background: #2E5FA3; border-radius: 8px;
-      transition: width 0.4s; width: 0%;
+    .panel.is-visible { display: block; }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
-    .progress-msg { font-size: 13px; color: #5A6472; min-height: 20px; }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .status-dot.done  { background: var(--success); box-shadow: 0 0 0 3px rgba(29,106,58,0.12); animation: none; }
+    .status-dot.error { background: var(--danger);  box-shadow: 0 0 0 3px rgba(192,57,43,0.12); animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.35; }
+    }
+    .panel-pct {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--navy);
+      font-weight: 500;
+    }
+    .bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gold);
+      transition: width .4s ease;
+    }
+    .bar-fill.done  { background: var(--success); }
+    .bar-fill.error { background: var(--danger); }
+    .panel-msg {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 40px;
+      word-break: break-word;
+    }
 
-    /* Result */
-    #result-card { display: none; }
-    .stats-row { display: flex; gap: 12px; margin: 16px 0; }
-    .stat-box {
-      flex: 1; padding: 12px; border-radius: 8px; text-align: center;
+    /* ─────────── Stats ─────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      margin-top: 24px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
     }
-    .stat-box .num { font-size: 22px; font-weight: 700; }
-    .stat-box .lbl { font-size: 11px; margin-top: 2px; }
-    .stat-total   { background: #EEF2F8; color: #0D1F3C; }
-    .stat-ok      { background: #EAF5EE; color: #1D6A3A; }
-    .stat-partial { background: #FEF9E7; color: #B7770D; }
-    .stat-gap     { background: #FDEDEC; color: #C0392B; }
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat {
+      padding: 20px 16px;
+      background: var(--surface);
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 28px;
+      font-weight: 500;
+      font-family: var(--mono);
+      color: var(--navy);
+      letter-spacing: -0.02em;
+    }
+    .stat-lbl {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .stat.answered .stat-num { color: var(--success); }
+    .stat.partial  .stat-num { color: var(--warning); }
+    .stat.gap      .stat-num { color: var(--danger); }
 
-    .signals-detected { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    /* ─────────── Detected signals chips ─────────── */
+    .detected-wrap {
+      margin-top: 24px;
+    }
+    .detected-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 10px;
+    }
+    .detected {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
     .sig-badge {
-      padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-mute);
     }
-    .sig-badge.active { background: #0D1F3C; color: white; }
-    .sig-badge.inactive { background: #F4F5F7; color: #5A6472; }
-
-    .download-btn {
-      display: block; width: 100%; padding: 13px; margin-top: 16px;
-      background: #1D6A3A; color: white; border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 700; text-align: center;
-      text-decoration: none; cursor: pointer; transition: background 0.2s;
+    .sig-badge.active {
+      background: var(--gold-soft);
+      border-color: var(--gold-line);
+      color: var(--gold);
+      font-weight: 500;
     }
-    .download-btn:hover { background: #145C30; }
 
-    /* Error */
+    /* ─────────── Download + actions ─────────── */
+    .result-actions {
+      margin-top: 28px;
+      display: flex;
+      gap: 12px;
+    }
+    .result-actions .btn { flex: 1; justify-content: center; }
+
     .error-box {
-      background: #FDEDEC; border: 1px solid #E74C3C; border-radius: 8px;
-      padding: 14px; color: #C0392B; font-size: 13px; margin-top: 12px;
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: rgba(192,57,43,0.04);
+      border: 1px solid rgba(192,57,43,0.25);
+      border-radius: var(--radius);
+      color: var(--danger);
+      font-size: 13px;
+    }
+
+    /* ─────────── Footer ─────────── */
+    .footer {
+      margin-top: 96px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-mute);
     }
   </style>
 </head>
+
 <body>
+  <main class="shell">
 
-<div class="header">
-  <div>
-    <h1>BTSF — DDQ Automation Tool</h1>
-  </div>
-  <span>Bitcoin Mining Credit Due Diligence · v1.1</span>
-</div>
-
-<div class="container">
-
-  <!-- Formulaire -->
-  <div class="card" id="form-card">
-    <div class="card-title">Nouveau deal</div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nom du deal *</label>
-        <input type="text" id="deal_name" placeholder="Project Broadstone" value="Project Broadstone">
+    <!-- Header -->
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-mark">B</div>
+        <span>BTSF</span>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Adresse du site</label>
-        <input type="text" id="site" placeholder="2501 S. Grandview Ave, Odessa TX">
-      </div>
-      <div class="form-group" style="max-width:140px">
-        <label>Capacité (MW)</label>
-        <input type="text" id="mw" placeholder="65 MW">
-      </div>
-    </div>
-    <div style="background:#EAF5EE;border:1px solid #1D6A3A;border-radius:7px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1D6A3A">
-      🔒 <strong>Clé API configurée côté serveur</strong> — aucune saisie requise
-    </div>
+      <div class="nav-meta">DDQ Automation · v1.1</div>
+    </nav>
 
-    <!-- Upload -->
-    <div class="form-group" style="margin-bottom:16px">
-      <label>Documents de la data room *</label>
-      <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
-        <div class="icon">📂</div>
-        <p><strong>Glisser-déposer</strong> les documents ici</p>
-        <p>ou cliquer pour sélectionner</p>
-        <p style="margin-top:6px;font-size:11px">PDF · DOCX · XLSX · TXT acceptés</p>
-      </div>
-      <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.txt,.csv,.md" style="display:none">
-      <div class="file-list" id="file-list"></div>
-    </div>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">Bitcoin Mining Credit · Due Diligence</div>
+      <h1>Turn data rooms into institutional-grade DDQs.</h1>
+      <p>Upload your project documents and let the engine extract, classify, and draft a complete due diligence questionnaire — ready for investment committee.</p>
+    </section>
 
-    <!-- Signaux override -->
-    <div class="form-group" style="margin-bottom:20px">
-      <label>Forcer des signaux (optionnel)</label>
-      <div class="signals-grid" id="signals-grid">
-        <div class="signal-chip" data-key="greenfield"            data-state="auto">greenfield</div>
-        <div class="signal-chip" data-key="brownfield"            data-state="auto">brownfield</div>
-        <div class="signal-chip" data-key="existing_infrastructure" data-state="auto">infrastructure existante</div>
-        <div class="signal-chip" data-key="btm_gas"               data-state="auto">BTM gaz</div>
-        <div class="signal-chip" data-key="btm_renewable"         data-state="auto">BTM renouvelable</div>
-        <div class="signal-chip" data-key="hosting"               data-state="auto">hosting</div>
-        <div class="signal-chip" data-key="existing_debt"         data-state="auto">dette existante</div>
-        <div class="signal-chip" data-key="permits_in_place"      data-state="auto">permis obtenus</div>
-        <div class="signal-chip" data-key="equipment_purchased"   data-state="auto">équipement acheté</div>
-        <div class="signal-chip" data-key="prior_operations"      data-state="auto">opérations antérieures</div>
-        <div class="signal-chip" data-key="ppa_present"           data-state="auto">PPA</div>
-      </div>
-      <p class="signals-note">Auto = détecté automatiquement · Vert = forcé ON · Rouge = forcé OFF · Clic pour basculer</p>
-    </div>
+    <!-- Form -->
+    <div class="form" id="form-card">
 
-    <button class="btn" id="submit-btn" onclick="submitJob()">Générer la DDQ</button>
-  </div>
+      <!-- Deal info -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Deal</div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="deal_name">Deal Name</label>
+            <input type="text" id="deal_name" placeholder="Project Broadstone" value="Project Broadstone" />
+          </div>
+          <div class="field">
+            <label for="site">Location</label>
+            <input type="text" id="site" placeholder="Odessa, TX" />
+          </div>
+        </div>
+      </div>
 
-  <!-- Progression -->
-  <div class="card" id="progress-card">
-    <div class="card-title">Génération en cours</div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar" id="progress-bar"></div>
-    </div>
-    <div class="progress-msg" id="progress-msg">Démarrage...</div>
-  </div>
+      <!-- Documents -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Data Room</div>
+          <div class="section-hint">API key managed server-side</div>
+        </div>
+        <div class="drop" id="dropzone">
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="drop-title">Drop documents here or click to browse</div>
+          <div class="drop-sub">Accepted: <code>PDF</code> <code>DOCX</code> <code>XLSX</code> <code>TXT</code> <code>CSV</code> <code>MD</code></div>
+          <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.txt,.csv,.md" style="display:none" />
+        </div>
+        <div class="file-list" id="file-list"></div>
+      </div>
 
-  <!-- Résultat -->
-  <div class="card" id="result-card">
-    <div class="card-title">DDQ générée ✓</div>
+      <!-- Signals override -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Signal Override <span style="color:var(--text-mute);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        </div>
+        <div class="signals-grid" id="signals-grid">
+          <div class="signal-chip" data-key="greenfield"              data-state="auto">greenfield</div>
+          <div class="signal-chip" data-key="brownfield"              data-state="auto">brownfield</div>
+          <div class="signal-chip" data-key="existing_infrastructure" data-state="auto">existing infrastructure</div>
+          <div class="signal-chip" data-key="btm_gas"                 data-state="auto">BTM gas</div>
+          <div class="signal-chip" data-key="btm_renewable"           data-state="auto">BTM renewable</div>
+          <div class="signal-chip" data-key="hosting"                 data-state="auto">hosting</div>
+          <div class="signal-chip" data-key="existing_debt"           data-state="auto">existing debt</div>
+          <div class="signal-chip" data-key="permits_in_place"        data-state="auto">permits in place</div>
+          <div class="signal-chip" data-key="equipment_purchased"     data-state="auto">equipment purchased</div>
+          <div class="signal-chip" data-key="prior_operations"        data-state="auto">prior operations</div>
+          <div class="signal-chip" data-key="ppa_present"             data-state="auto">PPA</div>
+        </div>
+        <div class="signals-legend">
+          <b>Auto</b> — detected automatically · <b>Navy</b> — forced ON · <b>Red (strikethrough)</b> — forced OFF · click to toggle
+        </div>
+      </div>
 
-    <div class="stats-row">
-      <div class="stat-box stat-total">
-        <div class="num" id="stat-total">—</div>
-        <div class="lbl">Questions</div>
+      <!-- Submit -->
+      <div class="actions">
+        <button class="btn" id="submit-btn" onclick="submitJob()">
+          Generate DDQ
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
       </div>
-      <div class="stat-box stat-ok">
-        <div class="num" id="stat-ok">—</div>
-        <div class="lbl">Répondues</div>
-      </div>
-      <div class="stat-box stat-partial">
-        <div class="num" id="stat-partial">—</div>
-        <div class="lbl">Partielles</div>
-      </div>
-      <div class="stat-box stat-gap">
-        <div class="num" id="stat-gap">—</div>
-        <div class="lbl">Gaps</div>
-      </div>
+
     </div>
 
-    <div style="font-size:12px;font-weight:700;color:#0D1F3C;margin-bottom:6px">
-      Signaux détectés
-    </div>
-    <div class="signals-detected" id="signals-detected"></div>
+    <!-- Status panel -->
+    <section class="panel" id="progress-card">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-label">Processing</span>
+        </div>
+        <div class="panel-pct" id="progress-pct">0%</div>
+      </div>
+      <div class="bar"><div class="bar-fill" id="progress-bar"></div></div>
+      <div class="panel-msg" id="progress-msg">Initializing…</div>
+    </section>
 
-    <a class="download-btn" id="download-link" href="#" download>
-      ⬇ Télécharger la DDQ (Word)
-    </a>
+    <!-- Result panel -->
+    <section class="panel" id="result-card">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span class="status-dot done"></span>
+          <span>Completed</span>
+        </div>
+        <div class="panel-pct">100%</div>
+      </div>
 
-    <button class="btn" style="margin-top:10px;background:#5A6472"
-            onclick="resetForm()">Nouveau deal</button>
-  </div>
+      <div class="stats" id="stats">
+        <div class="stat"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Questions</div></div>
+        <div class="stat answered"><div class="stat-num" id="stat-ok">—</div><div class="stat-lbl">Answered</div></div>
+        <div class="stat partial"><div class="stat-num" id="stat-partial">—</div><div class="stat-lbl">Partial</div></div>
+        <div class="stat gap"><div class="stat-num" id="stat-gap">—</div><div class="stat-lbl">Gaps</div></div>
+      </div>
 
-</div>
+      <div class="detected-wrap">
+        <div class="detected-label">Detected Signals</div>
+        <div class="detected" id="signals-detected"></div>
+      </div>
 
-<script>
-  let selectedFiles = [];
-  let pollInterval  = null;
-  let currentJobId  = null;
+      <div class="result-actions">
+        <a class="btn btn-gold" id="download-link" href="#" download>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download DDQ
+        </a>
+        <button class="btn btn-ghost" onclick="resetForm()">New Deal</button>
+      </div>
+    </section>
 
-  // ── Drag & drop ────────────────────────────────────────────────────────────
-  const dropzone  = document.getElementById("dropzone");
-  const fileInput = document.getElementById("file-input");
+    <!-- Footer -->
+    <footer class="footer">
+      <div>BTSF — Bitcoin Mining Credit</div>
+      <div>Due Diligence Automation</div>
+    </footer>
 
-  dropzone.addEventListener("dragover",  e => { e.preventDefault(); dropzone.classList.add("dragover"); });
-  dropzone.addEventListener("dragleave", ()  => dropzone.classList.remove("dragover"));
-  dropzone.addEventListener("drop", e => {
-    e.preventDefault(); dropzone.classList.remove("dragover");
-    addFiles(Array.from(e.dataTransfer.files));
-  });
-  fileInput.addEventListener("change", () => addFiles(Array.from(fileInput.files)));
+  </main>
 
-  function addFiles(files) {
-    const allowed = [".pdf",".docx",".doc",".xlsx",".xls",".txt",".csv",".md"];
-    files.forEach(f => {
-      const ext = "." + f.name.split(".").pop().toLowerCase();
-      if (allowed.includes(ext) && !selectedFiles.find(x => x.name === f.name)) {
-        selectedFiles.push(f);
-      }
+  <script>
+    let selectedFiles = [];
+    let pollInterval  = null;
+    let currentJobId  = null;
+
+    // ── Drag & drop ──────────────────────────────────────────────────
+    const dropzone  = document.getElementById("dropzone");
+    const fileInput = document.getElementById("file-input");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("dragover",  e => { e.preventDefault(); dropzone.classList.add("is-drag"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("is-drag"));
+    dropzone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropzone.classList.remove("is-drag");
+      addFiles(Array.from(e.dataTransfer.files));
     });
-    renderFileList();
-  }
+    fileInput.addEventListener("change", () => addFiles(Array.from(fileInput.files)));
 
-  function renderFileList() {
-    const list = document.getElementById("file-list");
-    list.innerHTML = selectedFiles.map((f, i) => `
-      <div class="file-item">
-        <div class="dot"></div>
-        <span style="flex:1">${f.name}</span>
-        <span style="color:#5A6472;font-size:11px">${(f.size/1024).toFixed(0)} KB</span>
-        <span style="cursor:pointer;color:#C0392B;font-size:16px;margin-left:8px"
-              onclick="removeFile(${i})">×</span>
-      </div>`).join("");
-  }
+    function addFiles(files) {
+      const allowed = [".pdf",".docx",".doc",".xlsx",".xls",".txt",".csv",".md"];
+      files.forEach(f => {
+        const ext = "." + f.name.split(".").pop().toLowerCase();
+        if (allowed.includes(ext) && !selectedFiles.find(x => x.name === f.name)) {
+          selectedFiles.push(f);
+        }
+      });
+      renderFileList();
+    }
 
-  function removeFile(i) {
-    selectedFiles.splice(i, 1);
-    renderFileList();
-  }
+    function fmtSize(n) {
+      if (n < 1024) return n + " B";
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+      return (n / (1024 * 1024)).toFixed(1) + " MB";
+    }
 
-  // ── Signal chips ───────────────────────────────────────────────────────────
-  document.querySelectorAll(".signal-chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const state = chip.dataset.state;
-      if (state === "auto")         { chip.dataset.state = "on";  chip.classList.add("forced-on");  }
-      else if (state === "on")      { chip.dataset.state = "off"; chip.classList.remove("forced-on"); chip.classList.add("forced-off"); }
-      else                          { chip.dataset.state = "auto"; chip.classList.remove("forced-off"); }
-    });
-  });
+    function renderFileList() {
+      const list = document.getElementById("file-list");
+      list.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item">
+          <div class="name">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>${f.name}</span>
+          </div>
+          <div class="size">${fmtSize(f.size)}</div>
+          <button class="remove" onclick="removeFile(${i})" type="button" aria-label="Remove">×</button>
+        </div>`).join("");
+    }
 
-  function getSignalsOverride() {
-    const parts = [];
+    function removeFile(i) {
+      selectedFiles.splice(i, 1);
+      renderFileList();
+    }
+
+    // ── Signal chips ──────────────────────────────────────────────────
     document.querySelectorAll(".signal-chip").forEach(chip => {
-      if (chip.dataset.state === "on")  parts.push(chip.dataset.key + "=true");
-      if (chip.dataset.state === "off") parts.push(chip.dataset.key + "=false");
+      chip.addEventListener("click", () => {
+        const state = chip.dataset.state;
+        if (state === "auto") {
+          chip.dataset.state = "on";
+          chip.classList.add("forced-on");
+        } else if (state === "on") {
+          chip.dataset.state = "off";
+          chip.classList.remove("forced-on");
+          chip.classList.add("forced-off");
+        } else {
+          chip.dataset.state = "auto";
+          chip.classList.remove("forced-off");
+        }
+      });
     });
-    return parts.join(",");
-  }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-  async function submitJob() {
-    const dealName = document.getElementById("deal_name").value.trim();
+    function getSignalsOverride() {
+      const parts = [];
+      document.querySelectorAll(".signal-chip").forEach(chip => {
+        if (chip.dataset.state === "on")  parts.push(chip.dataset.key + "=true");
+        if (chip.dataset.state === "off") parts.push(chip.dataset.key + "=false");
+      });
+      return parts.join(",");
+    }
 
-    if (!dealName) { alert("Renseignez le nom du deal."); return; }
-    if (selectedFiles.length === 0) { alert("Ajoutez au moins un document."); return; }
+    // ── Submit ────────────────────────────────────────────────────────
+    async function submitJob() {
+      const dealName = document.getElementById("deal_name").value.trim();
+      if (!dealName) { alert("Please enter the deal name."); return; }
+      if (selectedFiles.length === 0) { alert("Please add at least one document."); return; }
 
-    const formData = new FormData();
-    formData.append("deal_name",        dealName);
-    formData.append("site",             document.getElementById("site").value.trim());
-    formData.append("mw",               document.getElementById("mw").value.trim());
-    formData.append("signals_override", getSignalsOverride());
-    selectedFiles.forEach(f => formData.append("documents", f));
+      const formData = new FormData();
+      formData.append("deal_name",        dealName);
+      formData.append("site",             document.getElementById("site").value.trim());
+      formData.append("signals_override", getSignalsOverride());
+      selectedFiles.forEach(f => formData.append("documents", f));
 
-    document.getElementById("submit-btn").disabled = true;
-    document.getElementById("progress-card").style.display = "block";
-    document.getElementById("result-card").style.display   = "none";
-    document.getElementById("progress-bar").style.width    = "5%";
-    document.getElementById("progress-msg").textContent    = "Envoi des documents...";
+      document.getElementById("submit-btn").disabled = true;
+      document.querySelectorAll(".error-box").forEach(e => e.remove());
+      const progressCard = document.getElementById("progress-card");
+      progressCard.classList.add("is-visible");
+      document.getElementById("result-card").classList.remove("is-visible");
+      document.getElementById("progress-bar").style.width = "5%";
+      document.getElementById("progress-pct").textContent = "5%";
+      document.getElementById("progress-msg").textContent = "Uploading documents…";
+      document.getElementById("status-dot").className = "status-dot";
+      document.getElementById("status-label").textContent = "Uploading";
 
-    const resp = await fetch("/submit", { method: "POST", body: formData });
-    const data = await resp.json();
+      try {
+        const resp = await fetch("/submit", { method: "POST", body: formData });
+        const data = await resp.json();
+        if (!resp.ok || data.error) { throw new Error(data.error || "Upload failed"); }
+        currentJobId = data.job_id;
+        pollInterval = setInterval(() => pollStatus(currentJobId), 2000);
+      } catch (err) {
+        showError(err.message);
+        document.getElementById("submit-btn").disabled = false;
+      }
+    }
 
-    if (data.error) {
-      showError(data.error);
+    // ── Polling ───────────────────────────────────────────────────────
+    async function pollStatus(jobId) {
+      try {
+        const resp = await fetch("/status/" + jobId);
+        const data = await resp.json();
+        const pct  = data.progress || 0;
+
+        document.getElementById("progress-bar").style.width = pct + "%";
+        document.getElementById("progress-pct").textContent = pct + "%";
+        document.getElementById("progress-msg").textContent = data.message || "";
+        document.getElementById("status-label").textContent = labelFor(data.status);
+
+        if (data.status === "done") {
+          clearInterval(pollInterval);
+          showResult(jobId, data);
+        } else if (data.status === "error") {
+          clearInterval(pollInterval);
+          document.getElementById("status-dot").className = "status-dot error";
+          document.getElementById("progress-bar").className = "bar-fill error";
+          showError(data.error || data.message || "Unknown error");
+          document.getElementById("submit-btn").disabled = false;
+        }
+      } catch (err) {
+        clearInterval(pollInterval);
+        showError(err.message);
+        document.getElementById("submit-btn").disabled = false;
+      }
+    }
+
+    function labelFor(status) {
+      switch (status) {
+        case "queued":  return "Queued";
+        case "running": return "Processing";
+        case "done":    return "Completed";
+        case "error":   return "Error";
+        default:        return status || "Processing";
+      }
+    }
+
+    // ── Result ────────────────────────────────────────────────────────
+    function showResult(jobId, data) {
+      document.getElementById("progress-card").classList.remove("is-visible");
+      document.getElementById("result-card").classList.add("is-visible");
+
+      if (data.stats) {
+        document.getElementById("stat-total").textContent   = data.stats.total;
+        document.getElementById("stat-ok").textContent      = data.stats.answered;
+        document.getElementById("stat-partial").textContent = data.stats.partial;
+        document.getElementById("stat-gap").textContent     = data.stats.gap;
+      }
+
+      if (data.signals) {
+        const container = document.getElementById("signals-detected");
+        container.innerHTML = Object.entries(data.signals).map(([k, v]) =>
+          `<span class="sig-badge ${v ? 'active' : ''}">${k.replace(/_/g,' ')}</span>`
+        ).join("");
+      }
+
+      document.getElementById("download-link").href     = "/download/" + jobId;
+      document.getElementById("download-link").download = data.output_name || "DDQ.docx";
+    }
+
+    function showError(msg) {
+      document.getElementById("progress-card").classList.remove("is-visible");
+      const errDiv = document.createElement("div");
+      errDiv.className = "error-box";
+      errDiv.textContent = "Error: " + msg;
+      document.getElementById("form-card").appendChild(errDiv);
+    }
+
+    function resetForm() {
+      selectedFiles = [];
+      renderFileList();
+      document.getElementById("result-card").classList.remove("is-visible");
+      document.getElementById("progress-card").classList.remove("is-visible");
       document.getElementById("submit-btn").disabled = false;
-      return;
+      document.querySelectorAll(".error-box").forEach(e => e.remove());
+      document.querySelectorAll(".signal-chip").forEach(c => {
+        c.dataset.state = "auto";
+        c.classList.remove("forced-on", "forced-off");
+      });
     }
-
-    currentJobId = data.job_id;
-    pollInterval = setInterval(() => pollStatus(currentJobId), 2000);
-  }
-
-  // ── Polling ────────────────────────────────────────────────────────────────
-  async function pollStatus(jobId) {
-    const resp = await fetch("/status/" + jobId);
-    const data = await resp.json();
-
-    document.getElementById("progress-bar").style.width = data.progress + "%";
-    document.getElementById("progress-msg").textContent = data.message || "";
-
-    if (data.status === "done") {
-      clearInterval(pollInterval);
-      showResult(jobId, data);
-    } else if (data.status === "error") {
-      clearInterval(pollInterval);
-      showError(data.error || "Erreur inconnue.");
-      document.getElementById("submit-btn").disabled = false;
-    }
-  }
-
-  // ── Result ─────────────────────────────────────────────────────────────────
-  function showResult(jobId, data) {
-    document.getElementById("progress-card").style.display = "none";
-    document.getElementById("result-card").style.display   = "block";
-
-    if (data.stats) {
-      document.getElementById("stat-total").textContent   = data.stats.total;
-      document.getElementById("stat-ok").textContent      = data.stats.answered;
-      document.getElementById("stat-partial").textContent = data.stats.partial;
-      document.getElementById("stat-gap").textContent     = data.stats.gap;
-    }
-
-    if (data.signals) {
-      const container = document.getElementById("signals-detected");
-      container.innerHTML = Object.entries(data.signals).map(([k, v]) =>
-        `<span class="sig-badge ${v ? 'active' : 'inactive'}">${k.replace(/_/g,' ')}</span>`
-      ).join("");
-    }
-
-    document.getElementById("download-link").href = "/download/" + jobId;
-    document.getElementById("download-link").download = data.output_name || "DDQ.docx";
-  }
-
-  function showError(msg) {
-    document.getElementById("progress-card").style.display = "none";
-    const errDiv = document.createElement("div");
-    errDiv.className = "error-box";
-    errDiv.textContent = "Erreur : " + msg;
-    document.getElementById("form-card").appendChild(errDiv);
-  }
-
-  function resetForm() {
-    selectedFiles = [];
-    renderFileList();
-    document.getElementById("result-card").style.display   = "none";
-    document.getElementById("progress-card").style.display = "none";
-    document.getElementById("submit-btn").disabled          = false;
-    document.querySelectorAll(".error-box").forEach(e => e.remove());
-    document.querySelectorAll(".signal-chip").forEach(c => {
-      c.dataset.state = "auto";
-      c.classList.remove("forced-on","forced-off");
-    });
-  }
-</script>
+  </script>
 </body>
 </html>
