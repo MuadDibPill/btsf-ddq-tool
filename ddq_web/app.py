@@ -50,7 +50,11 @@ def run_ddq_job(job_id: str, folder_path: str, deal_name: str,
         jobs[job_id]["message"] = "Extraction des documents..."
         jobs[job_id]["progress"] = 10
 
-        os.environ["ANTHROPIC_API_KEY"] = jobs[job_id].get("api_key", "")
+        # Clé depuis Render (variable env) ou saisie dans le formulaire (fallback)
+        api_key = os.getenv("ANTHROPIC_API_KEY") or jobs[job_id].get("api_key", "")
+        if not api_key:
+            raise ValueError("Clé API Anthropic non configurée. Ajouter ANTHROPIC_API_KEY dans les variables d'environnement Render.")
+        os.environ["ANTHROPIC_API_KEY"] = api_key
 
         from core.ingestion import ingest_folder
         from core.signals   import detect_signals
@@ -145,12 +149,11 @@ def submit():
     deal_name        = request.form.get("deal_name", "Project XXX").strip()
     site             = request.form.get("site", "").strip()
     mw               = request.form.get("mw", "").strip()
-    api_key          = request.form.get("api_key", "").strip()
+    # Clé lue depuis l'environnement — pas besoin du formulaire
     signals_override = request.form.get("signals_override", "").strip()
     files            = request.files.getlist("documents")
 
-    if not api_key:
-        return jsonify({"error": "Clé API Anthropic requise."}), 400
+    # Validation clé : elle est lue côté serveur
     if not files or all(f.filename == "" for f in files):
         return jsonify({"error": "Aucun document uploadé."}), 400
 
@@ -175,7 +178,6 @@ def submit():
         "status":   "queued",
         "progress": 0,
         "message":  f"{saved} fichier(s) reçu(s) — démarrage...",
-        "api_key":  api_key,
     }
 
     # Lancer dans un thread séparé
