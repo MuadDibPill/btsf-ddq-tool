@@ -21,6 +21,10 @@
       --gold-soft:     rgba(184, 148, 42, 0.08);
       --gold-line:     rgba(184, 148, 42, 0.35);
 
+      /* Accent orange (btsf.io brand dot) */
+      --orange:        #ff9900;
+      --orange-line:   rgba(255, 153, 0, 0.35);
+
       /* Neutrals */
       --bg:            #FAFAF7;
       --surface:       #FFFFFF;
@@ -62,7 +66,7 @@
     .shell {
       max-width: 760px;
       margin: 0 auto;
-      padding: 56px 32px 96px;
+      padding: 40px 16px 72px;
     }
 
     /* ─────────── Header ─────────── */
@@ -70,7 +74,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 40px;
+      padding-bottom: 20px;
       border-bottom: 1px solid var(--border);
     }
     .brand {
@@ -92,6 +96,19 @@
       font-size: 13px;
       letter-spacing: 0;
     }
+    .brand-wordmark {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+    }
+    .brand-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: inline-block;
+      transform: translateY(-1px);
+    }
     .nav-meta {
       color: var(--text-mute);
       font-size: 11px;
@@ -101,7 +118,7 @@
 
     /* ─────────── Hero ─────────── */
     .hero {
-      padding: 64px 0 56px;
+      padding: 28px 0 28px;
       border-bottom: 1px solid var(--border);
     }
     .hero-eyebrow {
@@ -111,15 +128,15 @@
       font-size: 11px;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--gold);
+      color: var(--orange);
       font-weight: 500;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     .hero-eyebrow::before {
       content: '';
       width: 28px;
       height: 1px;
-      background: var(--gold);
+      background: var(--orange);
     }
     .hero h1 {
       font-size: 40px;
@@ -157,10 +174,10 @@
 
     /* ─────────── Form ─────────── */
     .form {
-      padding-top: 56px;
+      padding-top: 28px;
       display: flex;
       flex-direction: column;
-      gap: 40px;
+      gap: 32px;
     }
     .field {
       display: flex;
@@ -570,7 +587,7 @@
     <nav class="nav">
       <div class="brand">
         <div class="brand-mark">B</div>
-        <span>BTSF</span>
+        <span class="brand-wordmark">BTSF<span class="brand-dot" aria-hidden="true"></span></span>
       </div>
       <div class="nav-meta">DDQ Automation · v1.1</div>
     </nav>
