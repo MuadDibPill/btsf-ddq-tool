@@ -17,7 +17,7 @@
       --orange:        #FF9900;   /* Bitcoin Orange */
       --orange-hi:     #E68A00;
       --blue-deep:     #2F6EB6;   /* Hover / active */
-      --blue-grey:     #7399C6;   /* Subtle highlights, eyebrow */
+      --blue-grey:     #7399C6;   /* Subtle highlights */
 
       /* Surfaces */
       --bg:            #FFFFFF;
@@ -122,7 +122,7 @@
       font-size: 12px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--blue-grey);
+      color: var(--orange);
       font-weight: 500;
       margin-bottom: 20px;
     }
@@ -130,7 +130,7 @@
       content: '';
       width: 28px;
       height: 1px;
-      background: var(--blue-grey);
+      background: var(--orange);
     }
     .hero h1 {
       font-size: 48px;
@@ -138,10 +138,10 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       margin-bottom: 20px;
-      color: var(--text);
+      color: #2F3338;
     }
     .hero p {
-      color: var(--text-dim);
+      color: #536378;
       font-size: 18px;
       font-weight: 300;
       line-height: 1.5;
@@ -390,13 +390,6 @@
       color: #FFFFFF;
       border-color: var(--navy);
     }
-    .signal-chip.forced-off {
-      background: var(--surface);
-      color: var(--danger);
-      border-color: var(--danger);
-      text-decoration: line-through;
-      text-decoration-thickness: 1px;
-    }
     .signals-legend {
       margin-top: 14px;
       font-size: 12px;
@@ -620,7 +613,6 @@
       <div class="brand">
         <span class="brand-wordmark">BTSF<span class="brand-dot" aria-hidden="true"></span></span>
       </div>
-      <div class="nav-meta">DDQ Automation · v1.1</div>
     </nav>
 
     <!-- Hero -->
@@ -635,13 +627,10 @@
 
       <!-- Deal info -->
       <div>
-        <div class="section-head">
-          <div class="section-title">Deal</div>
-        </div>
         <div class="grid-2">
           <div class="field">
             <label for="deal_name">Deal Name</label>
-            <input type="text" id="deal_name" placeholder="Project Broadstone" value="Project Broadstone" />
+            <input type="text" id="deal_name" />
           </div>
           <div class="field">
             <label for="site">Location</label>
@@ -747,7 +736,7 @@
 
         </div>
         <div class="signals-legend">
-          Click a section to expand · Chips cycle: <b>Auto</b> → <b>Forced ON</b> → <b>Forced OFF</b> → <b>Auto</b>
+          Click a section to expand · Click a chip to force-select it
         </div>
       </div>
 
@@ -871,17 +860,12 @@
     document.querySelectorAll(".signal-chip").forEach(chip => {
       chip.addEventListener("click", ev => {
         ev.stopPropagation();
-        const state = chip.dataset.state;
-        if (state === "auto") {
+        if (chip.dataset.state === "on") {
+          chip.dataset.state = "auto";
+          chip.classList.remove("forced-on");
+        } else {
           chip.dataset.state = "on";
           chip.classList.add("forced-on");
-        } else if (state === "on") {
-          chip.dataset.state = "off";
-          chip.classList.remove("forced-on");
-          chip.classList.add("forced-off");
-        } else {
-          chip.dataset.state = "auto";
-          chip.classList.remove("forced-off");
         }
         updateSectionCounts();
       });
@@ -889,10 +873,10 @@
 
     function updateSectionCounts() {
       document.querySelectorAll(".signals-section").forEach(section => {
-        const forced = section.querySelectorAll(".signal-chip.forced-on, .signal-chip.forced-off").length;
+        const forced = section.querySelectorAll(".signal-chip.forced-on").length;
         const badge  = section.querySelector(".signals-section-count");
         if (forced > 0) {
-          badge.textContent = forced + " forced";
+          badge.textContent = forced + " selected";
           badge.classList.add("has-overrides");
         } else {
           badge.textContent = "";
@@ -904,8 +888,7 @@
     function getSignalsOverride() {
       const parts = [];
       document.querySelectorAll(".signal-chip").forEach(chip => {
-        if (chip.dataset.state === "on")  parts.push(chip.dataset.key + "=true");
-        if (chip.dataset.state === "off") parts.push(chip.dataset.key + "=false");
+        if (chip.dataset.state === "on") parts.push(chip.dataset.key + "=true");
       });
       return parts.join(",");
     }
@@ -1024,7 +1007,7 @@
       document.querySelectorAll(".error-box").forEach(e => e.remove());
       document.querySelectorAll(".signal-chip").forEach(c => {
         c.dataset.state = "auto";
-        c.classList.remove("forced-on", "forced-off");
+        c.classList.remove("forced-on");
       });
       document.querySelectorAll(".signals-section").forEach(s => {
         s.classList.remove("is-open");
