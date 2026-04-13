@@ -66,7 +66,7 @@
     .shell {
       max-width: 760px;
       margin: 0 auto;
-      padding: 40px 16px 72px;
+      padding: 40px 16px 48px;
     }
 
     /* ─────────── Header ─────────── */
@@ -311,7 +311,67 @@
     }
     .file-item .remove:hover { color: var(--danger); }
 
-    /* ─────────── Signals (chip UI preserved) ─────────── */
+    /* ─────────── Signals (collapsible categories) ─────────── */
+    .signals-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .signals-section {
+      background: var(--surface);
+    }
+    .signals-section-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: transparent;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s;
+      font-family: inherit;
+    }
+    .signals-section-head:hover { background: var(--navy-soft); }
+    .signals-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+      flex: 1;
+    }
+    .signals-section-count {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-mute);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .signals-section-count.has-overrides {
+      color: var(--orange);
+      font-weight: 600;
+    }
+    .signals-chevron {
+      width: 12px; height: 12px;
+      color: var(--text-mute);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .signals-section.is-open .signals-chevron { transform: rotate(180deg); color: var(--navy); }
+    .signals-section-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .25s ease;
+    }
+    .signals-section.is-open .signals-section-body { max-height: 240px; }
+    .signals-section-body .signals-grid { padding: 0 16px 14px; }
+
     .signals-grid {
       display: flex;
       flex-wrap: wrap;
@@ -565,18 +625,6 @@
       font-size: 13px;
     }
 
-    /* ─────────── Footer ─────────── */
-    .footer {
-      margin-top: 96px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-mute);
-    }
   </style>
 </head>
 
@@ -643,33 +691,86 @@
         <div class="section-head">
           <div class="section-title">Signal Override <span style="color:var(--text-mute);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
         </div>
-        <div class="signals-grid" id="signals-grid">
-          <div class="signal-chip" data-key="greenfield"              data-state="auto">greenfield</div>
-          <div class="signal-chip" data-key="brownfield"              data-state="auto">brownfield</div>
-          <div class="signal-chip" data-key="existing_infrastructure" data-state="auto">existing infrastructure</div>
-          <div class="signal-chip" data-key="btm_gas"                 data-state="auto">BTM gas</div>
-          <div class="signal-chip" data-key="btm_renewable"           data-state="auto">BTM renewable</div>
-          <div class="signal-chip" data-key="hosting"                 data-state="auto">hosting</div>
-          <div class="signal-chip" data-key="existing_debt"           data-state="auto">existing debt</div>
-          <div class="signal-chip" data-key="permits_in_place"        data-state="auto">permits in place</div>
-          <div class="signal-chip" data-key="equipment_purchased"     data-state="auto">equipment purchased</div>
-          <div class="signal-chip" data-key="prior_operations"        data-state="auto">prior operations</div>
-          <div class="signal-chip" data-key="ppa_present"             data-state="auto">PPA</div>
+        <div class="signals-wrap">
+
+          <!-- Type of sites -->
+          <div class="signals-section">
+            <button type="button" class="signals-section-head" aria-expanded="false">
+              <span class="signals-section-title">Type of sites</span>
+              <span class="signals-section-count"></span>
+              <svg class="signals-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="signals-section-body">
+              <div class="signals-grid">
+                <div class="signal-chip" data-key="greenfield"              data-state="auto">greenfield</div>
+                <div class="signal-chip" data-key="brownfield"              data-state="auto">brownfield</div>
+                <div class="signal-chip" data-key="existing_infrastructure" data-state="auto">electrical infrastructure &amp; land</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Behind-the-meter optionality -->
+          <div class="signals-section">
+            <button type="button" class="signals-section-head" aria-expanded="false">
+              <span class="signals-section-title">Behind-the-meter optionality</span>
+              <span class="signals-section-count"></span>
+              <svg class="signals-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="signals-section-body">
+              <div class="signals-grid">
+                <div class="signal-chip" data-key="btm_gas"       data-state="auto">BTM gas</div>
+                <div class="signal-chip" data-key="btm_renewable" data-state="auto">BTM renewables</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Existing assets -->
+          <div class="signals-section">
+            <button type="button" class="signals-section-head" aria-expanded="false">
+              <span class="signals-section-title">Existing assets</span>
+              <span class="signals-section-count"></span>
+              <svg class="signals-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="signals-section-body">
+              <div class="signals-grid">
+                <div class="signal-chip" data-key="hosting"          data-state="auto">Hosting contracts</div>
+                <div class="signal-chip" data-key="prior_operations" data-state="auto">Operating site</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contracts & Permits -->
+          <div class="signals-section">
+            <button type="button" class="signals-section-head" aria-expanded="false">
+              <span class="signals-section-title">Contracts &amp; Permits</span>
+              <span class="signals-section-count"></span>
+              <svg class="signals-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="signals-section-body">
+              <div class="signals-grid">
+                <div class="signal-chip" data-key="permits_in_place" data-state="auto">permits commission</div>
+                <div class="signal-chip" data-key="ppa_present"      data-state="auto">PPA</div>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="signals-legend">
-          <b>Auto</b> — detected automatically · <b>Navy</b> — forced ON · <b>Red (strikethrough)</b> — forced OFF · click to toggle
+          Click a section to expand · Chips cycle: <b>Auto</b> → <b>Forced ON</b> → <b>Forced OFF</b> → <b>Auto</b>
         </div>
       </div>
 
       <!-- Submit -->
       <div class="actions">
-        <button class="btn" id="submit-btn" onclick="submitJob()">
-          Generate DDQ
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </button>
+        <button class="btn" id="submit-btn" onclick="submitJob()">Generate DDQ</button>
       </div>
 
     </div>
@@ -721,12 +822,6 @@
         <button class="btn btn-ghost" onclick="resetForm()">New Deal</button>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div>BTSF — Bitcoin Mining Credit</div>
-      <div>Due Diligence Automation</div>
-    </footer>
 
   </main>
 
@@ -787,9 +882,19 @@
       renderFileList();
     }
 
+    // ── Signal sections (collapsible) ─────────────────────────────────
+    document.querySelectorAll(".signals-section-head").forEach(head => {
+      head.addEventListener("click", () => {
+        const section = head.closest(".signals-section");
+        const isOpen  = section.classList.toggle("is-open");
+        head.setAttribute("aria-expanded", isOpen);
+      });
+    });
+
     // ── Signal chips ──────────────────────────────────────────────────
     document.querySelectorAll(".signal-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
+      chip.addEventListener("click", ev => {
+        ev.stopPropagation();
         const state = chip.dataset.state;
         if (state === "auto") {
           chip.dataset.state = "on";
@@ -802,8 +907,23 @@
           chip.dataset.state = "auto";
           chip.classList.remove("forced-off");
         }
+        updateSectionCounts();
       });
     });
+
+    function updateSectionCounts() {
+      document.querySelectorAll(".signals-section").forEach(section => {
+        const forced = section.querySelectorAll(".signal-chip.forced-on, .signal-chip.forced-off").length;
+        const badge  = section.querySelector(".signals-section-count");
+        if (forced > 0) {
+          badge.textContent = forced + " forced";
+          badge.classList.add("has-overrides");
+        } else {
+          badge.textContent = "";
+          badge.classList.remove("has-overrides");
+        }
+      });
+    }
 
     function getSignalsOverride() {
       const parts = [];
@@ -930,6 +1050,12 @@
         c.dataset.state = "auto";
         c.classList.remove("forced-on", "forced-off");
       });
+      document.querySelectorAll(".signals-section").forEach(s => {
+        s.classList.remove("is-open");
+        const head = s.querySelector(".signals-section-head");
+        if (head) head.setAttribute("aria-expanded", "false");
+      });
+      updateSectionCounts();
     }
   </script>
 </body>
