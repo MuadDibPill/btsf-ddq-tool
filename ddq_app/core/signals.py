@@ -80,6 +80,19 @@ SIGNALS = {
         "keywords": ["PPA", "power purchase agreement", "fixed price", "offtake agreement",
                      "energy contract", "fixed rate", "$/MWh fixed"],
     },
+    "distressed": {
+        "description": "The transaction is a recapitalization, rescue financing, workout, or "
+                       "otherwise involves a Borrower or collateral in financial/operational "
+                       "stress — events of default, forbearance, restructuring advisors, "
+                       "past-due obligations, chapter 11 / insolvency references, 13-week "
+                       "cash-flow forecast, or turnaround plan are all indicators.",
+        "keywords": ["distressed", "recapitalization", "rescue financing", "workout",
+                     "restructuring", "forbearance", "standstill", "event of default",
+                     "covenant breach", "reservation of rights", "chapter 11", "insolvency",
+                     "receivership", "13-week cash flow", "turnaround", "CRO",
+                     "chief restructuring officer", "past due", "ad-hoc group",
+                     "creditor committee", "liquidation", "administration"],
+    },
 }
 
 
