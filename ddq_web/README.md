@@ -1,187 +1,122 @@
-# BTSF DDQ Automation — Guide de déploiement
+# BTSF DDQ Automation Tool
 
-Trois façons de lancer l'interface, de la plus simple à la plus avancée.
+Automatically fills a Bitcoin mining credit due diligence questionnaire
+from a folder of data room documents using the Claude API.
 
----
+## How it works
 
-## Structure complète des fichiers
+1. **Ingest** — reads all PDF, DOCX, XLSX, TXT files from a local folder
+2. **Signal detection** — calls Claude to detect deal-type flags
+   (greenfield, brownfield, hosting, existing debt, etc.)
+3. **Question assembly** — builds the active question set:
+   minimum questions always asked + conditional blocks unlocked by signals
+4. **Answer generation** — for each question, retrieves relevant chunks
+   and calls Claude to generate an answer with source citation and confidence flag
+5. **Word export** — outputs a formatted .docx DDQ with colour-coded answers
 
-```
-projet/
-├── ddq_app/                  ← outil Python (déjà fourni)
-│   ├── main.py
-│   ├── config.py
-│   └── core/
-│       ├── ingestion.py
-│       ├── signals.py
-│       ├── questions.py
-│       ├── generator.py
-│       ├── writer.py
-│       ├── drive.py
-│       └── schema.py
-│
-└── ddq_web/                  ← interfaces web (ce dossier)
-    ├── app.py                ← interface Flask
-    ├── streamlit_app.py      ← interface Streamlit
-    ├── requirements.txt      ← dépendances
-    ├── render.yaml           ← config déploiement Render
-    ├── Procfile              ← fallback Render
-    ├── templates/
-    │   └── index.html        ← page HTML de l'interface Flask
-    └── README.md             ← ce fichier
-```
+## Setup
 
----
-
-## Option A — Flask (usage local ou réseau interne)
-
-### Installation
-
-```powershell
-cd ddq_web
-pip install flask gunicorn
+```bash
+# Install dependencies
 pip install anthropic pdfplumber docx2txt python-docx openpyxl
+
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
-### Lancement
+## Usage
 
-```powershell
-python app.py
+```bash
+cd ddq_app
+
+# Basic usage
+python main.py --folder /path/to/data_room --deal "Project Broadstone"
+
+# With site details
+python main.py \
+  --folder /path/to/data_room \
+  --deal "Project Broadstone" \
+  --site "2501 S. Grandview Ave, Odessa TX" \
+  --mw "65 MW"
+
+# Quiet mode (suppress per-question progress)
+python main.py --folder /path/to/data_room --deal "Project XXX" --quiet
 ```
 
-Ouvre le navigateur sur **http://localhost:5000**
+## Output
 
-### Partager avec l'équipe (réseau local)
+The tool generates a Word document in `ddq_app/output/` named:
+`DDQ_<deal_name>_<timestamp>.docx`
 
-Si toute l'équipe est sur le même réseau Wi-Fi ou VPN :
+Each answer is colour-coded:
+- **Green** — Answered, sourced from data room (with citation)
+- **Amber** — Partial answer, specific gap noted
+- **Red** — Not found in data room, must be provided manually
 
-```powershell
-python app.py
+## Standard template
+
+The question set is mapped **1:1 to the BTSF Mining Finance DDQ v1.1 PDF**
+(18 sections, Q1–Q128). Sections 1–9, 11–14 and 16–18 are always asked;
+sections 10 (Hosting) and 15 (Distressed / special situations) are gated
+by signals so they only appear when relevant.
+
+| # | Section | Questions | Gating |
+|---|---------|----------:|--------|
+| 1 | General information and deal overview | Q1–Q7 | always |
+| 2 | Corporate and ownership | Q8–Q16 | always |
+| 3 | Management, organization, and operations team | Q17–Q22 | always |
+| 4 | Historical and projected financials | Q23–Q30 | always |
+| 5 | Capital structure and existing indebtedness | Q31–Q35 | always |
+| 6 | ASIC fleet and equipment | Q36–Q44 | always |
+| 7 | Sites and infrastructure | Q45–Q54 | always |
+| 8 | Energy | Q55–Q68 | core always; PPA/hedging/prior-ops items gated |
+| 9 | Mining operations, pool, and revenue management | Q69–Q75 | always |
+| 10 | Hosting and third-party arrangements | Q76–Q79 | `hosting` signal |
+| 11 | Bitcoin treasury and custody | Q80–Q85 | always |
+| 12 | Risk management and insurance | Q86–Q91 | always |
+| 13 | Legal, tax, and regulatory | Q92–Q100 | always |
+| 14 | ESG | Q101–Q104 | always |
+| 15 | Distressed and special-situations | Q105–Q118 | `distressed` signal |
+| 16 | Proposed collateral and credit structure | Q119–Q125 | always |
+| 17 | References | Q126–Q127 | always |
+| 18 | Other | Q128 | always |
+
+## Deep-dive blocks
+
+In addition to the standard template, the tool can layer in deal-type
+deep-dive blocks when the corresponding signals are detected. These expand
+on topics not fully covered by the standard template:
+
+| Signal | Block activated |
+|--------|----------------|
+| Greenfield site | G.1–G.6: Interconnection, EPC, geotechnical |
+| Brownfield site | B.1–B.4: ESA, indemnitor, easements |
+| Existing infrastructure | EI.1–EI.3: Health assessment, arc flash, maintenance |
+| BTM gas generation | BTM.1–BTM.8: Pipeline, pricing, supply agreement |
+| BTM renewable | BTM.4, BTM.6: Solar/wind profile, grid backup |
+| Hosting operations | H.1–H.7: Contracts, concentration, churn |
+| Existing debt | DC.1–DC.5: Schedule, covenants, COC provisions |
+
+## File structure
+
+```
+ddq_app/
+├── main.py          # Entry point
+├── config.py        # API keys, colours, constants
+├── core/
+│   ├── ingestion.py # Document reading and chunking
+│   ├── signals.py   # Deal-type signal detection
+│   ├── questions.py # Full question registry
+│   ├── generator.py # Claude answer generation
+│   └── writer.py    # Word document export
+└── output/          # Generated DDQ documents
 ```
 
-Les collègues accèdent à l'URL :
-**http://TON-IP-LOCAL:5000**
+## Supported file types
 
-Pour trouver ton IP local sur Windows :
-```powershell
-ipconfig
-```
-Chercher "Adresse IPv4" (exemple : 192.168.1.45)
+PDF, DOCX, DOC, XLSX, XLS, TXT, MD, CSV
 
----
+## API cost estimate
 
-## Option B — Streamlit (plus simple, usage local ou cloud)
-
-### Installation
-
-```powershell
-pip install streamlit
-pip install anthropic pdfplumber docx2txt python-docx openpyxl
-```
-
-### Lancement
-
-```powershell
-cd ddq_web
-streamlit run streamlit_app.py
-```
-
-Ouvre automatiquement **http://localhost:8501**
-
-### Avantages Streamlit vs Flask
-
-| | Flask | Streamlit |
-|---|---|---|
-| Setup | Manuel | Automatique |
-| Interface | Custom HTML | Composants prêts |
-| Partage réseau | Manuel | `--server.address 0.0.0.0` |
-| Déploiement cloud | Gunicorn + Render | Streamlit Cloud (gratuit) |
-
----
-
-## Option C — Render (déploiement cloud, accès depuis n'importe où)
-
-Render héberge l'application sur un serveur cloud accessible depuis n'importe quel navigateur, sans avoir besoin d'un PC allumé en permanence.
-
-### Étape 1 — Préparer le repo GitHub
-
-Créer un compte GitHub (github.com) si pas encore fait.
-
-Créer un nouveau repository et y uploader tous les fichiers :
-```
-ddq_app/     (dossier complet)
-ddq_web/     (dossier complet)
-```
-
-### Étape 2 — Déployer sur Render
-
-1. Aller sur **render.com** et créer un compte (gratuit)
-2. Cliquer sur **New** → **Blueprint**
-3. Connecter le compte GitHub et sélectionner le repo
-4. Render détecte automatiquement `render.yaml` et crée les deux services
-5. Dans le dashboard Render, pour chaque service :
-   - Aller dans **Environment**
-   - Ajouter la variable `ANTHROPIC_API_KEY` = `sk-ant-ta-clé`
-6. Cliquer sur **Deploy**
-
-Render génère une URL publique du type :
-- Flask :     `https://btsf-ddq-flask.onrender.com`
-- Streamlit : `https://btsf-ddq-streamlit.onrender.com`
-
-L'équipe accède à cette URL depuis n'importe où.
-
-### Coûts Render
-
-| Plan | RAM | Prix | Usage recommandé |
-|---|---|---|---|
-| Free | 512 MB | 0 $/mois | Test uniquement (s'endort après 15 min) |
-| Starter | 512 MB | ~7 $/mois | Usage régulier équipe |
-| Standard | 2 GB | ~25 $/mois | Gros volumes, data rooms larges |
-
-Pour un usage BTSF, le plan **Starter** est suffisant.
-
-### Alternative gratuite — Streamlit Cloud
-
-Pour Streamlit uniquement, Streamlit Community Cloud est 100% gratuit :
-
-1. Aller sur **share.streamlit.io**
-2. Connecter GitHub
-3. Sélectionner le repo et le fichier `ddq_web/streamlit_app.py`
-4. Ajouter `ANTHROPIC_API_KEY` dans les secrets
-5. Déployer
-
-URL publique du type : `https://ton-app.streamlit.app`
-
----
-
-## Variables d'environnement requises
-
-| Variable | Description | Où la configurer |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Clé API Claude | Render dashboard / saisie dans l'interface |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Credentials Google Drive | Render dashboard (optionnel) |
-
----
-
-## Conseils sécurité
-
-- Ne jamais committer la clé API dans le code ou sur GitHub
-- Sur Render, toujours configurer `ANTHROPIC_API_KEY` via le dashboard Environment, jamais dans le code
-- Les fichiers uploadés sont temporaires et supprimés après chaque run
-- L'interface Flask ne stocke pas les clés API entre les sessions
-
----
-
-## Résolution de problèmes courants
-
-**`ModuleNotFoundError: No module named 'core'`**
-→ Vérifier que `ddq_app/` et `ddq_web/` sont au même niveau dans le repo
-
-**Timeout sur Render**
-→ Passer au plan Standard (plus de RAM) ou réduire la data room
-
-**`ANTHROPIC_API_KEY not set`**
-→ Ajouter la variable dans Render Dashboard → Environment → Add variable
-
-**Upload trop lent**
-→ Normal pour des PDF lourds — la limite est 100 MB par upload
+A typical 20-document data room with 60–80 active questions costs
+approximately $0.50–1.50 in Claude API calls and runs in 3–6 minutes.
